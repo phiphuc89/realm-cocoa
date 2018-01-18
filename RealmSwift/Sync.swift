@@ -666,3 +666,95 @@ extension Results where Element == SyncPermission {
 /// :nodoc:
 @available(*, unavailable, renamed: "SyncPermission")
 public final class SyncPermissionValue { }
+
+public class PermissionRole: Object {
+    @objc dynamic public var name = ""
+    let users = List<PermissionUser>()
+
+    @objc override public class func _realmObjectName() -> String {
+        return "__Role"
+    }
+    @objc override public class func primaryKey() -> String {
+        return "name"
+    }
+    @objc override public class func _realmColumnNames() -> [String: String] {
+        return ["users": "members"]
+    }
+}
+
+public class PermissionUser: Object {
+    @objc dynamic public var identity = ""
+    let roles = LinkingObjects(fromType: PermissionRole.self, property: "users")
+
+    @objc override public class func _realmObjectName() -> String {
+        return "__User"
+    }
+    @objc override public class func primaryKey() -> String {
+        return "identity"
+    }
+    @objc override public class func _realmColumnNames() -> [String: String] {
+        return ["identity": "id"]
+    }
+}
+
+public class Permission: Object {
+    @objc dynamic public var role: PermissionRole? = nil
+    @objc dynamic public var canRead = false
+    @objc dynamic public var canUpdate = false
+    @objc dynamic public var canDelete = false
+    @objc dynamic public var canSetPermissions = false
+    @objc dynamic public var canQuery = false
+    @objc dynamic public var canCreate = false
+    @objc dynamic public var canModifySchema = false
+
+    @objc override public class func _realmObjectName() -> String {
+        return "__Permission"
+    }
+}
+
+public class PermissionClass: Object {
+    @objc dynamic public var name = ""
+    public let permissions = List<Permission>()
+
+    @objc override public class func _realmObjectName() -> String {
+        return "__Class"
+    }
+    @objc override public class func primaryKey() -> String {
+        return "name"
+    }
+}
+
+public struct Privileges {
+    public var read = false
+    public var update = false
+    public var delete = false
+    public var setPermissions = false
+    public var query = false
+    public var create = false
+    public var modifySchema = false
+
+    internal init(_ value: UInt64) {
+        read = value & (1 << 0) != 0
+        update = value & (1 << 1) != 0
+        delete = value & (1 << 2) != 0
+        setPermissions = value & (1 << 3) != 0
+        query = value & (1 << 4) != 0
+        create = value & (1 << 5) != 0
+        modifySchema = value & (1 << 6) != 0
+    }
+}
+
+extension Realm {
+    public func getPrivileges() -> Privileges {
+        return Privileges(RLMGetComputedPermissions(rlmRealm, nil))
+    }
+    public func getPrivileges(_ object: Object) -> Privileges {
+        return Privileges(RLMGetComputedPermissions(rlmRealm, object))
+    }
+    public func getPrivileges<T: Object>(_ cls: T.Type) -> Privileges {
+        return Privileges(RLMGetComputedPermissions(rlmRealm, cls.className()))
+    }
+    public func getPrivileges(forClassNamed className: String) -> Privileges {
+        return Privileges(RLMGetComputedPermissions(rlmRealm, className))
+    }
+}

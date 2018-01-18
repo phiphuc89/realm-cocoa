@@ -17,12 +17,64 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #import "RLMSyncPermission_Private.hpp"
-#import "RLMSyncUtil_Private.hpp"
 
+#import "RLMSyncUtil_Private.hpp"
 #import "RLMUtil.hpp"
 
 using namespace realm;
+
 using ConditionType = Permission::Condition::Type;
+
+@implementation RLMPermissionRole
++ (NSString *)_realmObjectName {
+    return @"__Role";
+}
++ (NSString *)primaryKey {
+    return @"name";
+}
++ (NSArray *)requiredProperties {
+    return @[@"name"];
+}
++ (NSDictionary *)_realmColumnNames {
+    return @{@"users": @"members"};
+}
+@end
+
+@implementation RLMPermissionUser
++ (NSString *)_realmObjectName {
+    return @"__User";
+}
++ (NSString *)primaryKey {
+    return @"identity";
+}
++ (NSArray *)requiredProperties {
+    return @[@"identity"];
+}
++ (NSDictionary *)_realmColumnNames {
+    return @{@"identity": @"id"};
+}
++ (NSDictionary *)linkingObjectsProperties {
+    return @{@"roles": [RLMPropertyDescriptor descriptorWithClass:RLMPermissionRole.class propertyName:@"users"]};
+}
+@end
+
+@implementation RLMPermission
++ (NSString *)_realmObjectName {
+    return @"__Permission";
+}
+@end
+
+@implementation RLMPermissionClass
++ (NSString *)_realmObjectName {
+    return @"__Class";
+}
++ (NSString *)primaryKey {
+    return @"name";
+}
++ (NSArray *)requiredProperties {
+    return @[@"name"];
+}
+@end
 
 #pragma mark - Permission
 

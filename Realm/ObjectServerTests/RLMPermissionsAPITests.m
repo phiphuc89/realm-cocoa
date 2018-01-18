@@ -47,6 +47,21 @@ static NSURL *makeTildeSubstitutedURL(NSURL *url, RLMSyncUser *user) {
     return [NSURL URLWithString:[[url absoluteString] stringByReplacingOccurrencesOfString:@"~" withString:user.identity]];
 }
 
+@interface ObjectWithPermissions : RLMObject
+@property (nonatomic) int value;
+@property (nonatomic) RLMArray<RLMPermission *><RLMPermission> *permissions;
+@end
+@implementation ObjectWithPermissions
+@end
+
+@interface LinkToObjectWithPermissions : RLMObject
+@property (nonatomic) int value;
+@property (nonatomic) ObjectWithPermissions *link;
+@property (nonatomic) RLMArray<RLMPermission *><RLMPermission> *permissions;
+@end
+@implementation LinkToObjectWithPermissions
+@end
+
 @interface RLMPermissionsAPITests : RLMSyncTestCase
 
 @property (nonatomic, strong) NSString *currentUsernameBase;

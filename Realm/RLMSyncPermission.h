@@ -16,7 +16,66 @@
 //
 ////////////////////////////////////////////////////////////////////////////
 
-#import <Foundation/Foundation.h>
+#import <Realm/RLMObject.h>
+
+@protocol RLMPermission, RLMPermissionUser;
+@class RLMPermission, RLMPermissionUser, RLMPermissionRole,
+       RLMArray<RLMObjectType>, RLMLinkingObjects<RLMObjectType: RLMObject *>;
+
+NS_ASSUME_NONNULL_BEGIN
+
+/**
+ A permission which can be applied to a Realm, Class, or specific Object.
+ */
+@interface RLMPermission : RLMObject
+/// The Role which this Permission applies to. All users within the Role are
+/// granted the permissions specified by the fields below any
+/// objects/classes/realms which use this Permission.
+@property (nonatomic) RLMPermissionRole *role;
+
+@property (nonatomic) bool canRead;
+@property (nonatomic) bool canUpdate;
+@property (nonatomic) bool canDelete;
+@property (nonatomic) bool canSetPermissions;
+@property (nonatomic) bool canQuery;
+@property (nonatomic) bool canCreate;
+@property (nonatomic) bool canModifySchema;
+@end
+
+/**
+ A Role within the permissions system.
+ */
+@interface RLMPermissionRole : RLMObject
+@property (nonatomic) NSString *name;
+@property (nonatomic) RLMArray<RLMPermissionUser *><RLMPermissionUser> *users;
+@end
+
+/**
+ A sync user.
+ */
+@interface RLMPermissionUser : RLMObject
+@property (nonatomic) NSString *identity;
+@property (nonatomic, readonly) RLMLinkingObjects<RLMPermissionRole *> *roles;
+@end
+
+/**
+ Class-wide permissions.
+ */
+@interface RLMPermissionClass : RLMObject
+/// The class name of the object
+@property (nonatomic) NSString *name;
+@property (nonatomic) RLMArray<RLMPermission *><RLMPermission> *permissions;
+@end
+
+struct RLMPrivileges {
+    bool read : 1;
+    bool update : 1;
+    bool del : 1;
+    bool setPermissions : 1;
+    bool query : 1;
+    bool create : 1;
+    bool modifySchema : 1;
+};
 
 /**
  Access levels which can be granted to Realm Mobile Platform users
@@ -45,8 +104,6 @@ typedef NS_ENUM(NSUInteger, RLMSyncAccessLevel) {
     /// granting permissions to other users.
     RLMSyncAccessLevelAdmin         = 3,
 };
-
-NS_ASSUME_NONNULL_BEGIN
 
 /**
  A property on which a `RLMResults<RLMSyncPermission *>` can be queried or filtered.

@@ -860,6 +860,42 @@ REALM_NOINLINE static void translateSharedGroupOpenException(RLMRealmConfigurati
     return NO;
 }
 
+static RLMPrivileges makePrivileges(realm::ComputedPrivileges p) {
+    using Privilege = realm::ComputedPrivileges;
+    auto has = [=](Privilege expected) {
+        return (static_cast<int>(p) & static_cast<int>(expected)) != 0;
+    };
+    return {
+        .read = has(Privilege::Read),
+        .update = has(Privilege::Update),
+        .del = has(Privilege::Delete),
+        .setPermissions = has(Privilege::Delete),
+        .query = has(Privilege::Query),
+        .create = has(Privilege::Create),
+        .modifySchema = has(Privilege::ModifySchema),
+    };
+}
+
+- (RLMPrivileges)privilegesForRealm {
+    return makePrivileges(_realm->get_privileges());
+}
+
+- (RLMPrivileges)privilegesForObject:(RLMObject *)object {
+    RLMVerifyAttached(object);
+    return makePrivileges(_realm->get_privileges(object->_row));
+}
+
+- (RLMPrivileges)privilegesForClass:(Class)cls {
+    if (![cls respondsToSelector:@selector(className)]) {
+        @throw RLMException(@"Cannot get privileges for non-RLMObject class %@", cls);
+    }
+    return makePrivileges(_realm->get_privileges([cls className].UTF8String));
+}
+
+- (RLMPrivileges)privilegesForClassNamed:(NSString *)className {
+    return makePrivileges(_realm->get_privileges(className.UTF8String));
+}
+
 - (void)registerEnumerator:(RLMFastEnumerator *)enumerator {
     if (!_collectionEnumerators) {
         _collectionEnumerators = [NSHashTable hashTableWithOptions:NSPointerFunctionsWeakMemory];
