@@ -64,7 +64,7 @@ using ConditionType = Permission::Condition::Type;
 }
 @end
 
-@implementation RLMPermissionClass
+@implementation RLMClassPermission
 + (NSString *)_realmObjectName {
     return @"__Class";
 }
@@ -73,6 +73,33 @@ using ConditionType = Permission::Condition::Type;
 }
 + (NSArray *)requiredProperties {
     return @[@"name"];
+}
+
++ (instancetype)objectInRealm:(RLMRealm *)realm forClassNamed:(NSString *)name {
+    return [RLMClassPermission objectInRealm:realm forPrimaryKey:name];
+}
++ (instancetype)objectInRealm:(RLMRealm *)realm forClass:(Class)cls {
+    return [RLMClassPermission objectInRealm:realm forPrimaryKey:[cls className]];
+}
+@end
+
+@interface RLMRealmPermission ()
+@property (nonatomic) int pk;
+@end
+
+@implementation RLMRealmPermission
++ (NSString *)_realmObjectName {
+    return @"__Realm";
+}
++ (NSDictionary *)_realmColumnNames {
+    return @{@"pk": @"id"};
+}
++ (NSString *)primaryKey {
+    return @"pk";
+}
+
++ (instancetype)objectInRealm:(RLMRealm *)realm {
+    return [RLMRealmPermission objectInRealm:realm forPrimaryKey:@0];
 }
 @end
 
