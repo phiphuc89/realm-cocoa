@@ -353,10 +353,13 @@ static NSURL *syncDirectoryForChildProcess() {
                                     user:(RLMSyncUser *)user
                            encryptionKey:(NSData *)encryptionKey
                               stopPolicy:(RLMSyncStopPolicy)stopPolicy {
-    RLMRealmConfiguration *c = [RLMRealmConfiguration defaultConfiguration];
-    c.syncConfiguration = [[RLMSyncConfiguration alloc] initWithUser:user realmURL:url];
-    c.syncConfiguration.stopPolicy = stopPolicy;
+    auto syncConfig = [[RLMSyncConfiguration alloc] initWithUser:user realmURL:url];
+    syncConfig.stopPolicy = stopPolicy;
+    syncConfig.isPartial = YES;
+
+    auto c = [RLMRealmConfiguration defaultConfiguration];
     c.encryptionKey = encryptionKey;
+    c.syncConfiguration = syncConfig;
     return [RLMRealm realmWithConfiguration:c error:nil];
 }
 
@@ -422,13 +425,12 @@ static NSURL *syncDirectoryForChildProcess() {
                           error:(NSError **)error {
     RLMSyncSession *session = [user sessionForURL:url];
     NSAssert(session, @"Cannot call with invalid URL");
-    XCTestExpectation *ex = expectation ?: [self expectationWithDescription:@"Download waiter expectation"];
+    XCTestExpectation *ex = expectation ?: [self expectationWithDescription:@"Wait for download completion"];
     __block NSError *theError = nil;
-    BOOL queued = [session waitForDownloadCompletionOnQueue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0)
-                                                   callback:^(NSError *err){
-                                                       theError = err;
-                                                       [ex fulfill];
-                                                   }];
+    BOOL queued = [session waitForDownloadCompletionOnQueue:nil callback:^(NSError *err) {
+        theError = err;
+        [ex fulfill];
+    }];
     if (!queued) {
         XCTFail(@"Download waiter did not queue; session was invalid or errored out.");
         return;
@@ -446,13 +448,12 @@ static NSURL *syncDirectoryForChildProcess() {
 - (void)waitForUploadsForUser:(RLMSyncUser *)user url:(NSURL *)url error:(NSError **)error {
     RLMSyncSession *session = [user sessionForURL:url];
     NSAssert(session, @"Cannot call with invalid URL");
-    XCTestExpectation *ex = [self expectationWithDescription:@"Upload waiter expectation"];
+    XCTestExpectation *ex = [self expectationWithDescription:@"Wait for upload completion"];
     __block NSError *theError = nil;
-    BOOL queued = [session waitForUploadCompletionOnQueue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0)
-                                                 callback:^(NSError *err){
-                                                     theError = err;
-                                                     [ex fulfill];
-                                                 }];
+    BOOL queued = [session waitForUploadCompletionOnQueue:nil callback:^(NSError *err) {
+        theError = err;
+        [ex fulfill];
+    }];
     if (!queued) {
         XCTFail(@"Upload waiter did not queue; session was invalid or errored out.");
         return;
@@ -463,6 +464,40 @@ static NSURL *syncDirectoryForChildProcess() {
     if (error) {
         *error = theError;
     }
+}
+
+- (void)waitForUploadsForUser:(RLMSyncUser *)user realm:(RLMRealm *)realm error:(NSError **)outError {
+    RLMSyncSession *session = [user sessionForRealm:realm];
+    NSAssert(session, @"Cannot call with invalid Realm");
+    XCTestExpectation *ex = [self expectationWithDescription:@"Wait for upload completion"];
+    BOOL queued = [session waitForUploadCompletionOnQueue:nil callback:^(NSError *error) {
+        if (outError) {
+            *outError = error;
+        }
+        [ex fulfill];
+    }];
+    if (!queued) {
+        XCTFail(@"Upload waiter did not queue; session was invalid or errored out.");
+        return;
+    }
+    [self waitForExpectations:@[ex] timeout:20.0];
+}
+
+- (void)waitForDownloadsForUser:(RLMSyncUser *)user realm:(RLMRealm *)realm error:(NSError **)outError {
+    RLMSyncSession *session = [user sessionForRealm:realm];
+    NSAssert(session, @"Cannot call with invalid Realm");
+    XCTestExpectation *ex = [self expectationWithDescription:@"Wait for download completion"];
+    BOOL queued = [session waitForDownloadCompletionOnQueue:nil callback:^(NSError *error) {
+        if (outError) {
+            *outError = error;
+        }
+        [ex fulfill];
+    }];
+    if (!queued) {
+        XCTFail(@"Download waiter did not queue; session was invalid or errored out.");
+        return;
+    }
+    [self waitForExpectations:@[ex] timeout:20.0];
 }
 
 - (void)manuallySetRefreshTokenForUser:(RLMSyncUser *)user value:(NSString *)tokenValue {

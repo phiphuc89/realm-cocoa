@@ -23,6 +23,7 @@
 #import "RLMRealmConfiguration+Sync.h"
 #import "RLMRealmConfiguration_Private.hpp"
 #import "RLMRealmUtil.hpp"
+#import "RLMRealm_Private.hpp"
 #import "RLMResults_Private.hpp"
 #import "RLMSyncManager_Private.h"
 #import "RLMSyncPermissionResults.h"
@@ -233,6 +234,21 @@ PermissionChangeCallback RLMWrapPermissionStatusCallback(RLMPermissionStatusBloc
         return nil;
     }
     auto path = SyncManager::shared().path_for_realm(*_user, [url.absoluteString UTF8String]);
+    if (auto session = _user->session_for_on_disk_path(path)) {
+        return [[RLMSyncSession alloc] initWithSyncSession:session];
+    }
+    return nil;
+}
+
+- (nullable RLMSyncSession *)sessionForRealm:(RLMRealm *)realm {
+    if (!_user) {
+        return nil;
+    }
+    auto& config = realm->_realm->config().sync_config;
+    if (!config) {
+        return nil;
+    }
+    auto path = SyncManager::shared().path_for_realm(*_user, config->realm_url());
     if (auto session = _user->session_for_on_disk_path(path)) {
         return [[RLMSyncSession alloc] initWithSyncSession:session];
     }

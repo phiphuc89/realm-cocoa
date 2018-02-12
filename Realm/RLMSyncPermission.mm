@@ -18,6 +18,7 @@
 
 #import "RLMSyncPermission_Private.hpp"
 
+#import "RLMArray.h"
 #import "RLMSyncUtil_Private.hpp"
 #import "RLMUtil.hpp"
 
@@ -56,11 +57,30 @@ using ConditionType = Permission::Condition::Type;
 + (NSDictionary *)linkingObjectsProperties {
     return @{@"roles": [RLMPropertyDescriptor descriptorWithClass:RLMPermissionRole.class propertyName:@"users"]};
 }
+
++ (RLMPermissionUser *)userInRealm:(RLMRealm *)realm withIdentity:(NSString *)identity {
+    if (id user = [self objectInRealm:realm forPrimaryKey:identity]) {
+        return user;
+    }
+    RLMPermissionUser *user = [self createInRealm:realm withValue:@[identity]];
+    RLMPermissionRole *role = [RLMPermissionRole createOrUpdateInRealm:realm withValue:@{@"name": @"everyone"}];
+    [role.users addObject:user];
+    return user;
+}
 @end
 
 @implementation RLMPermission
 + (NSString *)_realmObjectName {
     return @"__Permission";
+}
++ (NSDictionary *)defaultPropertyValues {
+    return @{@"canRead": @NO,
+             @"canUpdate": @NO,
+             @"canDelete": @NO,
+             @"canSetPermissions": @NO,
+             @"canQuery": @NO,
+             @"canCreate": @NO,
+             @"canModifySchema": @NO};
 }
 @end
 

@@ -116,9 +116,11 @@ NS_ASSUME_NONNULL_BEGIN
                             url:(NSURL *)url
                     expectation:(nullable XCTestExpectation *)expectation
                           error:(NSError **)error;
+- (void)waitForDownloadsForUser:(RLMSyncUser *)user realm:(RLMRealm *)realm error:(NSError **)error;
 
 /// Wait for uploads to complete while spinning the runloop. This method uses expectations.
 - (void)waitForUploadsForUser:(RLMSyncUser *)user url:(NSURL *)url error:(NSError **)error;
+- (void)waitForUploadsForUser:(RLMSyncUser *)user realm:(RLMRealm *)realm error:(NSError **)error;
 
 /// Manually set the refresh token for a user. Used for testing invalid token conditions.
 - (void)manuallySetRefreshTokenForUser:(RLMSyncUser *)user value:(NSString *)tokenValue;

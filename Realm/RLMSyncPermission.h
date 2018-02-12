@@ -80,6 +80,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Roles which this user belongs to.
 @property (nonatomic, readonly) RLMLinkingObjects<RLMPermissionRole *> *roles;
+
+/// Get the user object in the given Realm, creating it if needed.
++ (RLMPermissionUser *)userInRealm:(RLMRealm *)realm withIdentity:(NSString *)identity;
 @end
 
 /**

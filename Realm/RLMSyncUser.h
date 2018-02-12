@@ -181,6 +181,8 @@ NS_SWIFT_UNAVAILABLE("Use the full version of this API.");
  */
 - (nullable RLMSyncSession *)sessionForURL:(NSURL *)url;
 
+- (nullable RLMSyncSession *)sessionForRealm:(RLMRealm *)realm;
+
 /**
  Retrieve all the valid sessions belonging to this user.
  */
