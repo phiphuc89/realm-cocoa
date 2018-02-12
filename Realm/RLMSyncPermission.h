@@ -145,11 +145,11 @@ struct RLMRealmPrivileges {
     /// privileges to a Role which they do not themselves have.
     bool setPermissions : 1;
 
-    /// If `false`, the user is not permitted to add new object types to the Realm.
-    /// Defining new RLMObject subclasses (and not excluding them from the schema with
-    /// `-[RLMRealmConfiguration setObjectClasses:]`) will result in the application
-    /// crashing if the object types are not first added on the server by a more privileged
-    /// user.
+    /// If `false`, the user is not permitted to add new object types to the Realm or add
+    /// new properties to existing objec types. Defining new RLMObject subclasses (and not
+    /// excluding them from the schema with `-[RLMRealmConfiguration setObjectClasses:]`)
+    /// will result in the application crashing if the object types are not first added on
+    /// the server by a more privileged user.
     bool modifySchema : 1;
 };
 
@@ -205,11 +205,6 @@ struct RLMClassPrivileges {
     /// Even if this field is `true`, note that the user will be unable to grant
     /// privileges to a Role which they do not themselves have.
     bool setPermissions : 1;
-
-    /// If `false`, the user is not permitted to add new properties to this class.
-    /// Attempting to do so without first adding the new properties on the server with a
-    /// more privileged user will result in the application crashing.
-    bool modifySchema : 1;
 };
 
 /**
